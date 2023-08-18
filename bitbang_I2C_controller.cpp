@@ -2,12 +2,12 @@
 
 int SDA_PIN;
 int SCL_PIN;
-int wait_value;
+int WAIT_VAL;
 
 void bbi2c_init( int sda, int scl, int wait_value ){
-	SDA_PIN	= sda;
-	SCL_PIN	= scl;
-	wait_value	= wait_value;
+	SDA_PIN		= sda;
+	SCL_PIN		= scl;
+	WAIT_VAL	= wait_value;
 	
 	pinMode( SDA_PIN, INPUT_PULLUP );
 	pinMode( SCL_PIN, INPUT_PULLUP );
@@ -29,27 +29,32 @@ inline void set_scl( int state ) {
 }
 
 inline int bit_io( int bit ) {
+	uint32_t wait	= 0;
+	
 	set_sda( bit );
-	short_wait( wait_value );
+	short_wait( WAIT_VAL );
 
 	set_scl( 1 );
 	while ( !gpio_get( SCL_PIN ) )
-		;
+		wait++;
 
 	int rtn = gpio_get( SDA_PIN ) ? 1 : 0;
 
-	short_wait( wait_value );
+//	short_wait( WAIT_VAL + wait );
+	short_wait( WAIT_VAL );
 	set_scl( 0 );
 
+//	Serial.println(wait);
+	
 	return rtn;
 }
 
 inline ctrl_status start_condition( void ) {
 	set_scl( 1 );
 	set_sda( 1 );
-	short_wait( wait_value );
+	short_wait( WAIT_VAL );
 	set_sda( 0 );
-	short_wait( wait_value );
+	short_wait( WAIT_VAL );
 	set_scl( 0 );
 	
 	return NO_ERROR;
@@ -58,17 +63,17 @@ inline ctrl_status start_condition( void ) {
 inline void stop_condition( void ) {
 	set_scl( 0 );
 	set_sda( 0 );
-	short_wait( wait_value );
+	short_wait( WAIT_VAL );
 	set_scl( 1 );
-	short_wait( wait_value );
+	short_wait( WAIT_VAL );
 	set_sda( 1 );
 }
 
 inline void prepare_for_repeated_start_condition( void ) {
 	set_scl( 0 );
-	short_wait( wait_value );
+	short_wait( WAIT_VAL );
 	set_scl( 1 );
-	short_wait( wait_value );
+	short_wait( WAIT_VAL );
 }
 
 ctrl_status write_byte( uint8_t data ) {
