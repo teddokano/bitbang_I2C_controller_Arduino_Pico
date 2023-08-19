@@ -1,5 +1,7 @@
 #include	"bitbang_I2C_controller.h"
 
+//#define	BUS_BUSY_CHECK
+
 int SDA_PIN;
 int SCL_PIN;
 int WAIT_VAL;
@@ -29,22 +31,18 @@ inline void set_scl( int state ) {
 }
 
 inline int bit_io( int bit ) {
-	uint32_t wait	= 0;
-	
+	set_scl( 0 );
 	set_sda( bit );
 	short_wait( WAIT_VAL );
 
 	set_scl( 1 );
+	
 	while ( !gpio_get( SCL_PIN ) )
-		wait++;
+		;
 
 	int rtn = gpio_get( SDA_PIN ) ? 1 : 0;
 
-//	short_wait( WAIT_VAL + wait );
 	short_wait( WAIT_VAL );
-	set_scl( 0 );
-
-//	Serial.println(wait);
 	
 	return rtn;
 }
@@ -52,11 +50,13 @@ inline int bit_io( int bit ) {
 inline ctrl_status start_condition( void ) {
 	set_scl( 1 );
 	set_sda( 1 );
-	
+
+#ifdef BUS_BUSY_CHECK	
 	for ( volatile int i = 0; i < WAIT_VAL; i++ )
 		if ( 0x3 !=  (gpio_get_all() & 0x3) )
 			return BUS_BUSY;
-
+#endif
+	
 	set_sda( 0 );
 	short_wait( WAIT_VAL );
 	set_scl( 0 );
@@ -85,11 +85,8 @@ ctrl_status write_byte( uint8_t data ) {
 		int bit		= ( data >> i ) & 0x1;
 		int check	= bit_io( bit );
 		
-		if ( check != bit ) {
-			Serial.printf( "**************** ARBITRATION_LOST\n" );
+		if ( check != bit )
 			return ARBITRATION_LOST;
-		}
-
 	}
 
 	return bit_io( 1 ) ? NACK_ON_ADDRESS : NO_ERROR;
@@ -116,7 +113,10 @@ ctrl_status write_transaction( uint8_t address, uint8_t *data, int length, bool 
 	
 	err	= write_byte( address & ~0x1 );
 
-	if ( err  ) {
+	if ( ARBITRATION_LOST == err )
+		return err;		
+	
+	if ( err ) {
 		err = NACK_ON_ADDRESS;		
 	}
 	else
