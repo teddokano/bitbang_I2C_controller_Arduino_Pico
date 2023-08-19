@@ -1,6 +1,10 @@
 #include	"bitbang_I2C_controller.h"
 
 //#define	BUS_BUSY_CHECK
+
+/**
+ * Following constants are measured values with "-O2" compile option with arduino-pico 3.3.2
+ */
 #define	BIT_PERIOD_BY_ZERO_WAIT	0.48	//	bit clock peripd (microsecond) when WAIT_VAL == 0
 #define	BIT_PERIOD_COEFFICIENT	0.18	//	bit clock peripd difference (microsecond) by WAIT_VAL++
 
