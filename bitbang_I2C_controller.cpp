@@ -1,15 +1,17 @@
 #include	"bitbang_I2C_controller.h"
 
 //#define	BUS_BUSY_CHECK
+#define	BIT_PERIOD_BY_ZERO_WAIT	0.48	//	bit clock peripd (microsecond) when WAIT_VAL == 0
+#define	BIT_PERIOD_COEFFICIENT	0.18	//	bit clock peripd difference (microsecond) by WAIT_VAL++
 
 int SDA_PIN;
 int SCL_PIN;
 int WAIT_VAL;
 
-void bbi2c_init( int sda, int scl, int wait_value ){
+void bbi2c_init( int sda, int scl, float freq ){
 	SDA_PIN		= sda;
 	SCL_PIN		= scl;
-	WAIT_VAL	= wait_value;
+	WAIT_VAL	= (int)(((1e6 / freq) - BIT_PERIOD_BY_ZERO_WAIT) / BIT_PERIOD_COEFFICIENT);
 	
 	pinMode( SDA_PIN, INPUT_PULLUP );
 	pinMode( SCL_PIN, INPUT_PULLUP );

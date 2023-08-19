@@ -10,7 +10,7 @@ enum ctrl_status : int
 	BUS_BUSY,
 };
 
-void				bbi2c_init( int sda, int scl, int wait_cycle = 30 );
+void				bbi2c_init( int sda, int scl, float freq = 30 );
 
 inline void			short_wait( int duration );
 inline void			set_sda( int state );
