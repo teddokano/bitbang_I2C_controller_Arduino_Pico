@@ -52,7 +52,11 @@ inline int bit_io( int bit ) {
 inline ctrl_status start_condition( void ) {
 	set_scl( 1 );
 	set_sda( 1 );
-	short_wait( WAIT_VAL );
+	
+	for ( volatile int i = 0; i < WAIT_VAL; i++ )
+		if ( 0x3 !=  (gpio_get_all() & 0x3) )
+			return BUS_BUSY;
+
 	set_sda( 0 );
 	short_wait( WAIT_VAL );
 	set_scl( 0 );
@@ -81,8 +85,11 @@ ctrl_status write_byte( uint8_t data ) {
 		int bit		= ( data >> i ) & 0x1;
 		int check	= bit_io( bit );
 		
-		if ( check != bit )
+		if ( check != bit ) {
+			Serial.printf( "**************** ARBITRATION_LOST\n" );
 			return ARBITRATION_LOST;
+		}
+
 	}
 
 	return bit_io( 1 ) ? NACK_ON_ADDRESS : NO_ERROR;

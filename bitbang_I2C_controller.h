@@ -7,7 +7,7 @@ enum ctrl_status : int
 	NACK_ON_ADDRESS,
 	NACK_ON_DATA,
 	ARBITRATION_LOST,
-	START_FAIL,
+	BUS_BUSY,
 };
 
 void				bbi2c_init( int sda, int scl, int wait_cycle = 30 );
