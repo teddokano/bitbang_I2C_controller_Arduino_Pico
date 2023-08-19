@@ -16,7 +16,7 @@ void setup() {
 
   //  bbi2c_init(0, 1, 14);
   //  bbi2c_init(0, 1, 14);
-  bbi2c_init(0, 1, 3000);
+  bbi2c_init(0, 1, 40);
   pinMode(MONITOR_PIN, OUTPUT);
   gpio_put(MONITOR_PIN, 1);
 }

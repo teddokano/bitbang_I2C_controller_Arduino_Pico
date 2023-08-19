@@ -42,14 +42,20 @@ inline int bit_io( int bit ) {
 
 	int rtn = gpio_get( SDA_PIN ) ? 1 : 0;
 
-	short_wait( WAIT_VAL );
+	
+	
+	//short_wait( WAIT_VAL );
+	for ( volatile int i = 0; i < WAIT_VAL; i++ )
+		if ( !gpio_get( SCL_PIN ) )
+			break;
+	
 	
 	return rtn;
 }
 
 inline ctrl_status start_condition( void ) {
-	set_scl( 1 );
-	set_sda( 1 );
+//	set_scl( 1 );
+//	set_sda( 1 );
 
 #ifdef BUS_BUSY_CHECK	
 	for ( volatile int i = 0; i < WAIT_VAL; i++ )
