@@ -14,9 +14,7 @@ void setup() {
   Serial.printf("\r***** Hello, bitbang_I2C_host! *****\n");
 #endif  // MESSSAGE
 
-  //  bbi2c_init(0, 1, 14);
-  //  bbi2c_init(0, 1, 14);
-  bbi2c_init(0, 1, 40);
+  bbi2c_init(0, 1, 11);
   pinMode(MONITOR_PIN, OUTPUT);
   gpio_put(MONITOR_PIN, 1);
 }
@@ -27,7 +25,7 @@ void loop() {
   gpio_put(MONITOR_PIN, 0);
 
 
-  for (volatile int i = 0; i < 0; i++)
+  for (volatile int i = 0; i < 300; i++)
     ;
 
   uint8_t data[] = { 0x00 };
@@ -38,7 +36,7 @@ void loop() {
 
   if (err == ARBITRATION_LOST) {
     Serial.printf("********************** ARBITRATION_LOST\n");
-    delay(20);
+    delay(1);
   }
 
   gpio_put(MONITOR_PIN, 1);
