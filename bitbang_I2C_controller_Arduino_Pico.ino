@@ -48,7 +48,7 @@ void loop() {
   err = read_transaction(0x90, tmp, sizeof(tmp));
 
 #if MESSAGE
-  Serial.printf("%.3f\n", ((int)(tmp[0]) << 8 | tmp[1]) / 256.0);
+  Serial.printf("temperature = %.3f [deg-C]\n", ((int)(tmp[0]) << 8 | tmp[1]) / 256.0);
 
 #endif  // MESSSAGE
 
