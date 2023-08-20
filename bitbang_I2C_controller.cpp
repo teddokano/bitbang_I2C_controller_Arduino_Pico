@@ -2,11 +2,15 @@
 
 //#define	BUS_BUSY_CHECK
 
-/**
- * Following constants are measured values with "-O2" compile option with arduino-pico 3.3.2
- */
-#define	BIT_PERIOD_BY_ZERO_WAIT	0.48	//	bit clock peripd (microsecond) when WAIT_VAL == 0
-#define	BIT_PERIOD_COEFFICIENT	0.18	//	bit clock peripd difference (microsecond) by WAIT_VAL++
+#define OPTIMZATION_LEVEL_Os
+
+#ifdef OPTIMZATION_LEVEL_Os
+	#define	BIT_FREQ_WHEN_WAIT_VAL_IS_ZERO		892000
+	#define	BIT_FREQ_WHEN_WAIT_VAL_IS_HUNDRED	66530
+#else
+	#define	BIT_FREQ_WHEN_WAIT_VAL_IS_ZERO		2000000
+	#define	BIT_FREQ_WHEN_WAIT_VAL_IS_HUNDRED	75350
+#endif
 
 int SDA_PIN;
 int SCL_PIN;
@@ -15,12 +19,25 @@ int WAIT_VAL;
 void bbi2c_init( int sda, int scl, float freq ){
 	SDA_PIN		= sda;
 	SCL_PIN		= scl;
-	WAIT_VAL	= (int)(((1e6 / freq) - BIT_PERIOD_BY_ZERO_WAIT) / BIT_PERIOD_COEFFICIENT);
+	
+	float	zero_wait_bit_period	= 1.0 / (float)BIT_FREQ_WHEN_WAIT_VAL_IS_ZERO;
+	float	bit_period_coefficient	= ((1.0 / (float)BIT_FREQ_WHEN_WAIT_VAL_IS_HUNDRED) - zero_wait_bit_period) / 100.0;
+	
+	WAIT_VAL	= (int)(0.99 + ((1.0 / freq) - zero_wait_bit_period) / bit_period_coefficient);
+	
+	//https://arduino-pico.readthedocs.io/en/latest/digital.html#output-modes-pad-strength
+	pinMode( SDA_PIN, OUTPUT_12MA );
+	pinMode( SCL_PIN, OUTPUT_12MA );
 	
 	pinMode( SDA_PIN, INPUT_PULLUP );
 	pinMode( SCL_PIN, INPUT_PULLUP );
 	gpio_put( SDA_PIN, 0 );
 	gpio_put( SCL_PIN, 0 );
+}
+
+void force_set_WAIT_VAL( int v )
+{
+	WAIT_VAL	= v;
 }
 
 inline void short_wait( int duration ) {
@@ -49,12 +66,13 @@ inline int bit_io( int bit ) {
 	int rtn = gpio_get( SDA_PIN ) ? 1 : 0;
 
 	
-	
-	//short_wait( WAIT_VAL );
-	for ( volatile int i = 0; i < WAIT_VAL; i++ )
+#if 0
+	short_wait( WAIT_VAL );
+#else
+	for ( volatile int i = 0; i < WAIT_VAL / 2; i++ )
 		if ( !gpio_get( SCL_PIN ) )
 			break;
-	
+#endif
 	
 	return rtn;
 }

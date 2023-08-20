@@ -14,9 +14,12 @@ void setup() {
   Serial.printf("\r***** Hello, bitbang_I2C_host! *****\n");
 #endif  // MESSSAGE
 
-  bbi2c_init(0, 1, 250000);  //  SDA_pin#, SCL_pin#, frequency[Hz]
+  bbi2c_init(0, 1, 400 * 1000);  //  SDA_pin#, SCL_pin#, frequency[Hz]
+  
   pinMode(MONITOR_PIN, OUTPUT);
   gpio_put(MONITOR_PIN, 1);
+
+//force_set_WAIT_VAL( 12 );
 }
 
 void loop() {
