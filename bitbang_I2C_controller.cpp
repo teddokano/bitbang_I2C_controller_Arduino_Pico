@@ -12,32 +12,34 @@
 	#define	BIT_FREQ_WHEN_WAIT_VAL_IS_HUNDRED	75350
 #endif
 
-int SDA_PIN;
-int SCL_PIN;
-int WAIT_VAL;
+static int	bbi2c_SDA_PIN;
+static int	bbi2c_SCL_PIN;
+static int	bbi2c_WAIT_VAL;
 
 void bbi2c_init( int sda, int scl, float freq ){
-	SDA_PIN		= sda;
-	SCL_PIN		= scl;
+	bbi2c_SDA_PIN		= sda;
+	bbi2c_SCL_PIN		= scl;
 	
 	float	zero_wait_bit_period	= 1.0 / (float)BIT_FREQ_WHEN_WAIT_VAL_IS_ZERO;
 	float	bit_period_coefficient	= ((1.0 / (float)BIT_FREQ_WHEN_WAIT_VAL_IS_HUNDRED) - zero_wait_bit_period) / 100.0;
 	
-	WAIT_VAL	= ceil(((1.0 / freq) - zero_wait_bit_period) / bit_period_coefficient);
+	bbi2c_WAIT_VAL	= ceil(((1.0 / freq) - zero_wait_bit_period) / bit_period_coefficient);
 	
-	//https://arduino-pico.readthedocs.io/en/latest/digital.html#output-modes-pad-strength
-	pinMode( SDA_PIN, OUTPUT_12MA );
-	pinMode( SCL_PIN, OUTPUT_12MA );
+	//	Set pin drive strength max.
+	//	https://arduino-pico.readthedocs.io/en/latest/digital.html#output-modes-pad-strength
 	
-	pinMode( SDA_PIN, INPUT_PULLUP );
-	pinMode( SCL_PIN, INPUT_PULLUP );
-	gpio_put( SDA_PIN, 0 );
-	gpio_put( SCL_PIN, 0 );
+	pinMode( bbi2c_SDA_PIN, OUTPUT_12MA );
+	pinMode( bbi2c_SCL_PIN, OUTPUT_12MA );
+	
+	pinMode( bbi2c_SDA_PIN, INPUT_PULLUP );
+	pinMode( bbi2c_SCL_PIN, INPUT_PULLUP );
+	gpio_put( bbi2c_SDA_PIN, 0 );
+	gpio_put( bbi2c_SCL_PIN, 0 );
 }
 
-void force_set_WAIT_VAL( int v )
+void force_set_bbi2c_WAIT_VAL( int v )
 {
-	WAIT_VAL	= v;
+	bbi2c_WAIT_VAL	= v;
 }
 
 inline void short_wait( int duration ) {
@@ -46,31 +48,31 @@ inline void short_wait( int duration ) {
 }
 
 inline void set_sda( int state ) {
-	gpio_set_dir( SDA_PIN, !state );
+	gpio_set_dir( bbi2c_SDA_PIN, !state );
 }
 
 inline void set_scl( int state ) {
-	gpio_set_dir( SCL_PIN, !state );
+	gpio_set_dir( bbi2c_SCL_PIN, !state );
 }
 
 inline int bit_io( int bit ) {
 	set_scl( 0 );
 	set_sda( bit );
-	short_wait( WAIT_VAL );
+	short_wait( bbi2c_WAIT_VAL );
 
 	set_scl( 1 );
 	
-	while ( !gpio_get( SCL_PIN ) )
+	while ( !gpio_get( bbi2c_SCL_PIN ) )
 		;
 
-	int rtn = gpio_get( SDA_PIN ) ? 1 : 0;
+	int rtn = gpio_get( bbi2c_SDA_PIN ) ? 1 : 0;
 
 	
 #if 0
-	short_wait( WAIT_VAL );
+	short_wait( bbi2c_WAIT_VAL );
 #else
-	for ( volatile int i = 0; i < WAIT_VAL / 2; i++ )
-		if ( !gpio_get( SCL_PIN ) )
+	for ( volatile int i = 0; i < bbi2c_WAIT_VAL / 2; i++ )
+		if ( !gpio_get( bbi2c_SCL_PIN ) )
 			break;
 #endif
 	
@@ -82,13 +84,13 @@ inline ctrl_status start_condition( void ) {
 //	set_sda( 1 );
 
 #ifdef BUS_BUSY_CHECK	
-	for ( volatile int i = 0; i < WAIT_VAL; i++ )
+	for ( volatile int i = 0; i < bbi2c_WAIT_VAL; i++ )
 		if ( 0x3 !=  (gpio_get_all() & 0x3) )
 			return BUS_BUSY;
 #endif
 	
 	set_sda( 0 );
-	short_wait( WAIT_VAL );
+	short_wait( bbi2c_WAIT_VAL );
 	set_scl( 0 );
 	
 	return NO_ERROR;
@@ -97,17 +99,17 @@ inline ctrl_status start_condition( void ) {
 inline void stop_condition( void ) {
 	set_scl( 0 );
 	set_sda( 0 );
-	short_wait( WAIT_VAL );
+	short_wait( bbi2c_WAIT_VAL );
 	set_scl( 1 );
-	short_wait( WAIT_VAL );
+	short_wait( bbi2c_WAIT_VAL );
 	set_sda( 1 );
 }
 
 inline void prepare_for_repeated_start_condition( void ) {
 	set_scl( 0 );
-	short_wait( WAIT_VAL );
+	short_wait( bbi2c_WAIT_VAL );
 	set_scl( 1 );
-	short_wait( WAIT_VAL );
+	short_wait( bbi2c_WAIT_VAL );
 }
 
 ctrl_status write_byte( uint8_t data ) {
