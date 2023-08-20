@@ -14,7 +14,7 @@ void setup() {
   Serial.printf("\r***** Hello, bitbang_I2C_host! *****\n");
 #endif  // MESSSAGE
 
-  bbi2c_init(0, 1, 400 * 1000);  //  SDA_pin#, SCL_pin#, frequency[Hz]
+  bbi2c_init(0, 1, 100 * 1000);  //  SDA_pin#, SCL_pin#, frequency[Hz]
   
   pinMode(MONITOR_PIN, OUTPUT);
   gpio_put(MONITOR_PIN, 1);
@@ -48,7 +48,7 @@ void loop() {
   err = read_transaction(0x90, tmp, sizeof(tmp));
 
 #if MESSAGE
-  Serial.printf("%f\n", ((int)(tmp[0]) << 8 | tmp[1]) / 256.0);
+  Serial.printf("%.3f\n", ((int)(tmp[0]) << 8 | tmp[1]) / 256.0);
 
 #endif  // MESSSAGE
 

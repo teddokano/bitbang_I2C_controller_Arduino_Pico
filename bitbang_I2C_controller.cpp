@@ -23,7 +23,7 @@ void bbi2c_init( int sda, int scl, float freq ){
 	float	zero_wait_bit_period	= 1.0 / (float)BIT_FREQ_WHEN_WAIT_VAL_IS_ZERO;
 	float	bit_period_coefficient	= ((1.0 / (float)BIT_FREQ_WHEN_WAIT_VAL_IS_HUNDRED) - zero_wait_bit_period) / 100.0;
 	
-	WAIT_VAL	= (int)(0.99 + ((1.0 / freq) - zero_wait_bit_period) / bit_period_coefficient);
+	WAIT_VAL	= ceil(((1.0 / freq) - zero_wait_bit_period) / bit_period_coefficient);
 	
 	//https://arduino-pico.readthedocs.io/en/latest/digital.html#output-modes-pad-strength
 	pinMode( SDA_PIN, OUTPUT_12MA );
