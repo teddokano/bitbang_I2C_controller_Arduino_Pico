@@ -2,7 +2,8 @@
 
 //#define	BUS_BUSY_CHECK
 
-#define OPTIMZATION_LEVEL_Os
+#define	MULTI_PIN_IO
+//#define OPTIMZATION_LEVEL_Os
 
 #ifdef OPTIMZATION_LEVEL_Os
 	#define	BIT_FREQ_WHEN_WAIT_VAL_IS_ZERO		892000
@@ -12,9 +13,14 @@
 	#define	BIT_FREQ_WHEN_WAIT_VAL_IS_HUNDRED	75350
 #endif
 
+
 static int	bbi2c_SDA_PIN;
 static int	bbi2c_SCL_PIN;
 static int	bbi2c_WAIT_VAL;
+
+static uint32_t	bbi2c_SDA_PIN_MAP = 0x0000;
+static uint32_t	bbi2c_SCL_PIN_MAP = 0x0000;
+
 
 void bbi2c_init( int sda, int scl, float freq ){
 	bbi2c_SDA_PIN		= sda;
@@ -25,16 +31,27 @@ void bbi2c_init( int sda, int scl, float freq ){
 	
 	bbi2c_WAIT_VAL	= ceil(((1.0 / freq) - zero_wait_bit_period) / bit_period_coefficient);
 	
-	//	Set pin drive strength max.
-	//	https://arduino-pico.readthedocs.io/en/latest/digital.html#output-modes-pad-strength
-	
-	pinMode( bbi2c_SDA_PIN, OUTPUT_12MA );
-	pinMode( bbi2c_SCL_PIN, OUTPUT_12MA );
-	
-	pinMode( bbi2c_SDA_PIN, INPUT_PULLUP );
-	pinMode( bbi2c_SCL_PIN, INPUT_PULLUP );
-	gpio_put( bbi2c_SDA_PIN, 0 );
-	gpio_put( bbi2c_SCL_PIN, 0 );
+	pin_init( bbi2c_SDA_PIN );
+	pin_init( bbi2c_SCL_PIN );
+
+	bbi2c_SDA_PIN_MAP = 1 << bbi2c_SDA_PIN;
+	bbi2c_SCL_PIN_MAP = 1 << bbi2c_SCL_PIN;
+}
+
+void pin_init( int pin )
+{
+	pinMode( pin, OUTPUT_12MA );
+	pinMode( pin, INPUT_PULLUP );
+	gpio_put( pin, 0 );
+}
+
+void additional_io_pins( int sda, int scl )
+{
+	pin_init( sda );
+	pin_init( scl );
+
+	bbi2c_SDA_PIN_MAP |= 1 << sda;
+	bbi2c_SCL_PIN_MAP |= 1 << scl;	
 }
 
 void force_set_bbi2c_WAIT_VAL( int v )
@@ -48,11 +65,25 @@ inline void short_wait( int duration ) {
 }
 
 inline void set_sda( int state ) {
+#ifdef MULTI_PIN_IO
+	if ( state )
+		gpio_set_dir_in_masked( bbi2c_SDA_PIN_MAP );
+	else
+		gpio_set_dir_out_masked( bbi2c_SDA_PIN_MAP );
+#else
 	gpio_set_dir( bbi2c_SDA_PIN, !state );
+#endif
 }
 
 inline void set_scl( int state ) {
+#ifdef MULTI_PIN_IO
+	if ( state )
+		gpio_set_dir_in_masked( bbi2c_SCL_PIN_MAP );
+	else
+		gpio_set_dir_out_masked( bbi2c_SCL_PIN_MAP );
+#else
 	gpio_set_dir( bbi2c_SCL_PIN, !state );
+#endif
 }
 
 inline int bit_io( int bit ) {

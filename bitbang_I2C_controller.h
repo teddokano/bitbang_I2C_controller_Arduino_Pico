@@ -11,6 +11,8 @@ enum ctrl_status : int
 };
 
 void				bbi2c_init( int sda, int scl, float freq = 100 * 1000 );
+void				pin_init( int pin );
+void				additional_io_pins( int sda, int scl );
 void				force_set_WAIT_VAL( int v );
 inline void			short_wait( int duration );
 inline void			set_sda( int state );

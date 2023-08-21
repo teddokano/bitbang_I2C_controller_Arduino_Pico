@@ -15,18 +15,18 @@ void setup() {
 #endif  // MESSSAGE
 
   bbi2c_init(0, 1, 400 * 1000);  //  SDA_pin#, SCL_pin#, frequency[Hz]
-  
+  additional_io_pins(4, 3);
+
   pinMode(MONITOR_PIN, OUTPUT);
   gpio_put(MONITOR_PIN, 1);
 
-//force_set_WAIT_VAL( 12 );
+  //force_set_WAIT_VAL( 12 );
 }
 
 void loop() {
   ctrl_status err;
 
   gpio_put(MONITOR_PIN, 0);
-
 
   for (volatile int i = 0; i < 300; i++)
     ;
