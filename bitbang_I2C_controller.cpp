@@ -101,7 +101,6 @@ inline int bit_io( int bit ) {
 	for ( volatile int i = 0; i < bbi2c_WAIT_VAL / 2; i++ )
 		if ( !gpio_get( bbi2c_SCL_PIN ) )
 			break;
-#endif
 	
 	return rtn;
 }
