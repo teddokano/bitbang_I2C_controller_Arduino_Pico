@@ -98,10 +98,6 @@ inline int bit_io( int bit ) {
 
 	int rtn = gpio_get( bbi2c_SDA_PIN ) ? 1 : 0;
 
-	
-#if 0
-	short_wait( bbi2c_WAIT_VAL );
-#else
 	for ( volatile int i = 0; i < bbi2c_WAIT_VAL / 2; i++ )
 		if ( !gpio_get( bbi2c_SCL_PIN ) )
 			break;
