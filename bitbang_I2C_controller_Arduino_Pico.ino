@@ -45,6 +45,7 @@ void loop() {
   gpio_put(MONITOR_PIN, 1);
 
   uint8_t tmp[2];
+  err = write_transaction(0x90, data, sizeof(data), true);
   err = read_transaction(0x90, tmp, sizeof(tmp));
 
 #if MESSAGE

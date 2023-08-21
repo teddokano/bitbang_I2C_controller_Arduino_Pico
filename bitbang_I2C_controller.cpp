@@ -110,7 +110,7 @@ inline ctrl_status start_condition( void ) {
 //	set_sda( 1 );
 
 #ifdef BUS_BUSY_CHECK	
-	for ( volatile int i = 0; i < bbi2c_WAIT_VAL; i++ )
+	for ( volatile int i = 0; i < bbi2c_WAIT_VAL / 2; i++ )
 		if ( 0x3 !=  (gpio_get_all() & 0x3) )
 			return BUS_BUSY;
 #endif
