@@ -1,13 +1,15 @@
 #include	"bitbang_I2C_controller.h"
 
+//#pragma GCC optimize ("O3")
+
 //#define	BUS_BUSY_CHECK
 
 #define	MULTI_PIN_IO
 //#define OPTIMZATION_LEVEL_Os
 
 #ifdef OPTIMZATION_LEVEL_Os
-	#define	BIT_FREQ_WHEN_WAIT_VAL_IS_ZERO		892000
-	#define	BIT_FREQ_WHEN_WAIT_VAL_IS_HUNDRED	66530
+	#define	BIT_FREQ_WHEN_WAIT_VAL_IS_ZERO		157700
+	#define	BIT_FREQ_WHEN_WAIT_VAL_IS_HUNDRED	59000
 #else
 	#define	BIT_FREQ_WHEN_WAIT_VAL_IS_ZERO		2000000
 	#define	BIT_FREQ_WHEN_WAIT_VAL_IS_HUNDRED	75350
@@ -30,6 +32,8 @@ void bbi2c_init( int sda, int scl, float freq ){
 	float	bit_period_coefficient	= ((1.0 / (float)BIT_FREQ_WHEN_WAIT_VAL_IS_HUNDRED) - zero_wait_bit_period) / 100.0;
 	
 	bbi2c_WAIT_VAL	= ceil(((1.0 / freq) - zero_wait_bit_period) / bit_period_coefficient);
+
+	Serial.printf( "bbi2c_WAIT_VAL = %d\n", bbi2c_WAIT_VAL );
 	
 	pin_init( bbi2c_SDA_PIN );
 	pin_init( bbi2c_SCL_PIN );

@@ -20,18 +20,19 @@ void setup() {
   pinMode(MONITOR_PIN, OUTPUT);
   gpio_put(MONITOR_PIN, 1);
 
-  //force_set_WAIT_VAL( 12 );
+//  force_set_bbi2c_WAIT_VAL( 0 );
 }
 
 void loop() {
+  uint8_t data[] = { 0x00 };
   ctrl_status err;
 
+#if 0
   gpio_put(MONITOR_PIN, 0);
 
   for (volatile int i = 0; i < 300; i++)
     ;
 
-  uint8_t data[] = { 0x00 };
   err = write_transaction(0x9E, data, sizeof(data), false);
 
   if (err)
@@ -43,6 +44,7 @@ void loop() {
   }
 
   gpio_put(MONITOR_PIN, 1);
+#endif
 
   uint8_t tmp[2];
   err = write_transaction(0x90, data, sizeof(data), true);
