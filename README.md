@@ -12,7 +12,8 @@ Bitbang I²C sample using Arduino-Pico. This code has been made to explain how a
 > To get best performance, choose optimization seting of "-O2" or "-O3".  
 > This optimization setting gives ability of **1MHz I²C** comminication.   
 > Even if the clock speed is set to 1MHz, the controller may not enough to drive the I²C bus as "Fast-mode Plus" because The Raspberry Pi Pico's single pin current drive capability is limited to 12mA.  
-To increase the current, consider to use a I²C buffer (like PCA9617, PCA9600, etc) or use 2 pins for each SDA and SCL to drive 20mA on those signals.  
+To increase the current, consider to use a I²C buffer (like PCA9617, PCA9600, etc) or use 2 pins for each SDA and SCL to drive 20mA on those signals.   
+
 ![optimization_setting.png](https://github.com/teddokano/bitbang_I2C_controller_Arduino_Pico/blob/main/reference/pic/optimization_setting.png)
 _Choosing a optimization option_
 
