@@ -1,22 +1,22 @@
 #include	<Arduino.h>
 #include 	<stdint.h>
 
-enum ctrl_status : int
-{
-	NO_ERROR	= 0,
-	NACK_ON_ADDRESS,
-	NACK_ON_DATA,
-	ARBITRATION_LOST,
-	BUS_BUSY,
-};
-
-class Bitbang_I2C_Controller
+class BbI2C
 {
 public:
 
+	enum ctrl_status : int
+	{
+		NO_ERROR	= 0,
+		NACK_ON_ADDRESS,
+		NACK_ON_DATA,
+		ARBITRATION_LOST,
+		BUS_BUSY,
+	};
 
-	Bitbang_I2C_Controller( int sda, int scl, float freq = 100 * 1000 );
-	virtual ~Bitbang_I2C_Controller();
+
+	BbI2C( int sda, int scl, float freq = 100 * 1000 );
+	virtual ~BbI2C();
 	
 	ctrl_status					write_transaction( uint8_t address, uint8_t *data, int length, bool repeated_start = false );
 	ctrl_status					read_transaction( uint8_t address, uint8_t *data, int length, bool repeated_start = false );

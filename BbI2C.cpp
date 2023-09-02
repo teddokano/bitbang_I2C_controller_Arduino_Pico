@@ -1,9 +1,7 @@
-#include	"Bitbang_I2C_Controller.h"
+#include	"BbI2C.h"
 
 //#pragma GCC optimize ("O3")
-
 //#define	BUS_BUSY_CHECK
-
 #define	MULTI_PIN_IO
 //#define OPTIMZATION_LEVEL_Os
 
@@ -16,7 +14,7 @@
 #endif
 
 
-Bitbang_I2C_Controller::Bitbang_I2C_Controller( int sda_pin, int scl_pin, float freq )
+BbI2C::BbI2C( int sda_pin, int scl_pin, float freq )
 	: sda( sda_pin ), scl( scl_pin )
 {
 	float	zero_wait_bit_period	= 1.0 / (float)BIT_FREQ_WHEN_WAIT_VAL_IS_ZERO;
@@ -33,18 +31,18 @@ Bitbang_I2C_Controller::Bitbang_I2C_Controller( int sda_pin, int scl_pin, float 
 	scl_map = 1 << scl;
 }
 
-Bitbang_I2C_Controller::~Bitbang_I2C_Controller()
+BbI2C::~BbI2C()
 {
 }
 
-void Bitbang_I2C_Controller::pin_init( int pin )
+void BbI2C::pin_init( int pin )
 {
 	pinMode( pin, OUTPUT_12MA );
 	pinMode( pin, INPUT_PULLUP );
 	gpio_put( pin, 0 );
 }
 
-void Bitbang_I2C_Controller::additional_io_pins( int sda, int scl )
+void BbI2C::additional_io_pins( int sda, int scl )
 {
 	pin_init( sda );
 	pin_init( scl );
@@ -53,17 +51,17 @@ void Bitbang_I2C_Controller::additional_io_pins( int sda, int scl )
 	scl_map |= 1 << scl;	
 }
 
-void Bitbang_I2C_Controller::force_set_wait_val( int v )
+void BbI2C::force_set_wait_val( int v )
 {
 	wait_val	= v;
 }
 
-inline void Bitbang_I2C_Controller::short_wait( int duration ) {
+inline void BbI2C::short_wait( int duration ) {
 	for ( volatile int i = 0; i < duration; i++ )
 		;
 }
 
-inline void Bitbang_I2C_Controller::set_sda( int state ) {
+inline void BbI2C::set_sda( int state ) {
 #ifdef MULTI_PIN_IO
 	if ( state )
 		gpio_set_dir_in_masked( sda_map );
@@ -74,7 +72,7 @@ inline void Bitbang_I2C_Controller::set_sda( int state ) {
 #endif
 }
 
-inline void Bitbang_I2C_Controller::set_scl( int state ) {
+inline void BbI2C::set_scl( int state ) {
 #ifdef MULTI_PIN_IO
 	if ( state )
 		gpio_set_dir_in_masked( scl_map );
@@ -85,7 +83,7 @@ inline void Bitbang_I2C_Controller::set_scl( int state ) {
 #endif
 }
 
-inline int Bitbang_I2C_Controller::bit_io( int bit ) {
+inline int BbI2C::bit_io( int bit ) {
 	set_scl( 0 );
 	set_sda( bit );
 	short_wait( wait_val );
@@ -104,9 +102,7 @@ inline int Bitbang_I2C_Controller::bit_io( int bit ) {
 	return rtn;
 }
 
-inline ctrl_status Bitbang_I2C_Controller::start_condition( void ) {
-//	set_scl( 1 );
-//	set_sda( 1 );
+inline BbI2C::ctrl_status BbI2C::start_condition( void ) {
 
 #ifdef BUS_BUSY_CHECK	
 	for ( volatile int i = 0; i < wait_val / 2; i++ )
@@ -121,7 +117,7 @@ inline ctrl_status Bitbang_I2C_Controller::start_condition( void ) {
 	return NO_ERROR;
 }
 
-inline void Bitbang_I2C_Controller::stop_condition( void ) {
+inline void BbI2C::stop_condition( void ) {
 	set_scl( 0 );
 	set_sda( 0 );
 	short_wait( wait_val );
@@ -130,14 +126,14 @@ inline void Bitbang_I2C_Controller::stop_condition( void ) {
 	set_sda( 1 );
 }
 
-inline void Bitbang_I2C_Controller::prepare_for_repeated_start_condition( void ) {
+inline void BbI2C::prepare_for_repeated_start_condition( void ) {
 	set_scl( 0 );
 	short_wait( wait_val );
 	set_scl( 1 );
 	short_wait( wait_val );
 }
 
-ctrl_status Bitbang_I2C_Controller::write_byte( uint8_t data ) {
+BbI2C::ctrl_status BbI2C::write_byte( uint8_t data ) {
 	for ( int i = 7; i >= 0; i-- ) {
 		int bit		= ( data >> i ) & 0x1;
 		int check	= bit_io( bit );
@@ -149,7 +145,7 @@ ctrl_status Bitbang_I2C_Controller::write_byte( uint8_t data ) {
 	return bit_io( 1 ) ? NACK_ON_ADDRESS : NO_ERROR;
 }
 
-uint8_t Bitbang_I2C_Controller::read_byte( bool last_byte ) {
+uint8_t BbI2C::read_byte( bool last_byte ) {
 	uint8_t data = 0x0;
 	for ( int i = 7; i >= 0; i-- ) {
 		data |= ( bit_io( 1 ) ? 0x1 : 0x0 ) << i;
@@ -160,7 +156,7 @@ uint8_t Bitbang_I2C_Controller::read_byte( bool last_byte ) {
 	return data;
 }
 
-ctrl_status Bitbang_I2C_Controller::write_transaction( uint8_t address, uint8_t *data, int length, bool repeated_start ) {
+BbI2C::ctrl_status BbI2C::write_transaction( uint8_t address, uint8_t *data, int length, bool repeated_start ) {
 	ctrl_status	err	= NO_ERROR;
 	
 	err	= start_condition();
@@ -196,7 +192,7 @@ ctrl_status Bitbang_I2C_Controller::write_transaction( uint8_t address, uint8_t 
 	return err;
 }
 
-ctrl_status Bitbang_I2C_Controller::read_transaction( uint8_t address, uint8_t *data, int length, bool repeated_start ) {
+BbI2C::ctrl_status BbI2C::read_transaction( uint8_t address, uint8_t *data, int length, bool repeated_start ) {
 	ctrl_status	err	= NO_ERROR;
 	
 	err	= start_condition();
