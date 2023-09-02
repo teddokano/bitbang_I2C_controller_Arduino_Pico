@@ -11,7 +11,7 @@ void setup() {
 
   Serial.printf("\r***** Hello, bitbang_I2C_host! *****\n");
 
-  Bitbang_I2C_Controller i2c(0, 1, 400 * 1000);  //  SDA_pin#, SCL_pin#, frequency[Hz]
+  Bitbang_I2C_Controller i2c(0, 1, 100 * 1000);  //  SDA_pin#, SCL_pin#, frequency[Hz]
 
   i2c.additional_io_pins(4, 3);
 
