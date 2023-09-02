@@ -4,6 +4,8 @@
 
 constexpr int MONITOR_PIN = 2;
 
+
+
 void setup() {
 
 #if MESSAGE
@@ -14,18 +16,18 @@ void setup() {
   Serial.printf("\r***** Hello, bitbang_I2C_host! *****\n");
 #endif  // MESSSAGE
 
-  bbi2c_init(0, 1, 400 * 1000);  //  SDA_pin#, SCL_pin#, frequency[Hz]
-  additional_io_pins(4, 3);
+  Bitbang_I2C_Controller i2c(0, 1, 400 * 1000);  //  SDA_pin#, SCL_pin#, frequency[Hz]
+
+  i2c.additional_io_pins(4, 3);
 
   pinMode(MONITOR_PIN, OUTPUT);
   gpio_put(MONITOR_PIN, 1);
 
-//  force_set_bbi2c_WAIT_VAL( 0 );
-}
+  //  force_set_bbi2c_WAIT_VAL( 0 );
 
-void loop() {
-  uint8_t data[] = { 0x00 };
-  ctrl_status err;
+  while (true) {
+    uint8_t data[] = { 0x00 };
+    ctrl_status err;
 
 #if 0
   gpio_put(MONITOR_PIN, 0);
@@ -46,14 +48,18 @@ void loop() {
   gpio_put(MONITOR_PIN, 1);
 #endif
 
-  uint8_t tmp[2];
-  err = write_transaction(0x90, data, sizeof(data), true);
-  err = read_transaction(0x90, tmp, sizeof(tmp));
+    uint8_t tmp[2];
+    err = i2c.write_transaction(0x90, data, sizeof(data), true);
+    err = i2c.read_transaction(0x90, tmp, sizeof(tmp));
 
 #if MESSAGE
-  Serial.printf("temperature = %.3f [deg-C]\n", ((int)(tmp[0]) << 8 | tmp[1]) / 256.0);
+    Serial.printf("temperature = %.3f [deg-C]\n", ((int)(tmp[0]) << 8 | tmp[1]) / 256.0);
 
 #endif  // MESSSAGE
 
-  delay(100);
+    delay(100);
+  }
+}
+
+void loop() {
 }

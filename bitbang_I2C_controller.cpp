@@ -16,133 +16,128 @@
 #endif
 
 
-static int	bbi2c_SDA_PIN;
-static int	bbi2c_SCL_PIN;
-static int	bbi2c_WAIT_VAL;
-
-static uint32_t	bbi2c_SDA_PIN_MAP = 0x0000;
-static uint32_t	bbi2c_SCL_PIN_MAP = 0x0000;
-
-
-void bbi2c_init( int sda, int scl, float freq ){
-	bbi2c_SDA_PIN		= sda;
-	bbi2c_SCL_PIN		= scl;
-	
+Bitbang_I2C_Controller::Bitbang_I2C_Controller( int sda_pin, int scl_pin, float freq )
+	: sda( sda_pin ), scl( scl_pin )
+{
 	float	zero_wait_bit_period	= 1.0 / (float)BIT_FREQ_WHEN_WAIT_VAL_IS_ZERO;
 	float	bit_period_coefficient	= ((1.0 / (float)BIT_FREQ_WHEN_WAIT_VAL_IS_HUNDRED) - zero_wait_bit_period) / 100.0;
 	
-	bbi2c_WAIT_VAL	= ceil(((1.0 / freq) - zero_wait_bit_period) / bit_period_coefficient);
+	wait_val	= ceil(((1.0 / freq) - zero_wait_bit_period) / bit_period_coefficient);
 
-	Serial.printf( "bbi2c_WAIT_VAL = %d\n", bbi2c_WAIT_VAL );
+	Serial.printf( "wait_val = %d\n", wait_val );
 	
-	pin_init( bbi2c_SDA_PIN );
-	pin_init( bbi2c_SCL_PIN );
+	pin_init( sda );
+	pin_init( scl );
 
-	bbi2c_SDA_PIN_MAP = 1 << bbi2c_SDA_PIN;
-	bbi2c_SCL_PIN_MAP = 1 << bbi2c_SCL_PIN;
+	sda_map = 1 << sda;
+	scl_map = 1 << scl;
 }
 
-void pin_init( int pin )
+Bitbang_I2C_Controller::~Bitbang_I2C_Controller()
+{
+}
+
+void Bitbang_I2C_Controller::pin_init( int pin )
 {
 	pinMode( pin, OUTPUT_12MA );
 	pinMode( pin, INPUT_PULLUP );
 	gpio_put( pin, 0 );
 }
 
-void additional_io_pins( int sda, int scl )
+void Bitbang_I2C_Controller::additional_io_pins( int sda, int scl )
 {
 	pin_init( sda );
 	pin_init( scl );
 
-	bbi2c_SDA_PIN_MAP |= 1 << sda;
-	bbi2c_SCL_PIN_MAP |= 1 << scl;	
+	sda_map |= 1 << sda;
+	scl_map |= 1 << scl;	
 }
 
-void force_set_bbi2c_WAIT_VAL( int v )
+void Bitbang_I2C_Controller::force_set_wait_val( int v )
 {
-	bbi2c_WAIT_VAL	= v;
+	wait_val	= v;
 }
 
-inline void short_wait( int duration ) {
+inline void Bitbang_I2C_Controller::short_wait( int duration ) {
 	for ( volatile int i = 0; i < duration; i++ )
 		;
 }
 
-inline void set_sda( int state ) {
+inline void Bitbang_I2C_Controller::set_sda( int state ) {
 #ifdef MULTI_PIN_IO
 	if ( state )
-		gpio_set_dir_in_masked( bbi2c_SDA_PIN_MAP );
+		gpio_set_dir_in_masked( sda_map );
 	else
-		gpio_set_dir_out_masked( bbi2c_SDA_PIN_MAP );
+		gpio_set_dir_out_masked( sda_map );
 #else
-	gpio_set_dir( bbi2c_SDA_PIN, !state );
+	gpio_set_dir( sda, !state );
 #endif
 }
 
-inline void set_scl( int state ) {
+inline void Bitbang_I2C_Controller::set_scl( int state ) {
 #ifdef MULTI_PIN_IO
 	if ( state )
-		gpio_set_dir_in_masked( bbi2c_SCL_PIN_MAP );
+		gpio_set_dir_in_masked( scl_map );
 	else
-		gpio_set_dir_out_masked( bbi2c_SCL_PIN_MAP );
+		gpio_set_dir_out_masked( scl_map );
 #else
-	gpio_set_dir( bbi2c_SCL_PIN, !state );
+	gpio_set_dir( scl, !state );
 #endif
 }
 
-inline int bit_io( int bit ) {
+inline int Bitbang_I2C_Controller::bit_io( int bit ) {
 	set_scl( 0 );
 	set_sda( bit );
-	short_wait( bbi2c_WAIT_VAL );
+	short_wait( wait_val );
 
 	set_scl( 1 );
 	
-	while ( !gpio_get( bbi2c_SCL_PIN ) )
+	while ( !gpio_get( scl ) )
 		;
 
-	int rtn = gpio_get( bbi2c_SDA_PIN ) ? 1 : 0;
+	int rtn = gpio_get( sda ) ? 1 : 0;
 
-	for ( volatile int i = 0; i < bbi2c_WAIT_VAL / 2; i++ )
-		if ( !gpio_get( bbi2c_SCL_PIN ) )
+	for ( volatile int i = 0; i < wait_val / 2; i++ )
+		if ( !gpio_get( scl ) )
 			break;
 	
 	return rtn;
 }
 
-inline ctrl_status start_condition( void ) {
+inline ctrl_status Bitbang_I2C_Controller::start_condition( void ) {
 //	set_scl( 1 );
 //	set_sda( 1 );
 
 #ifdef BUS_BUSY_CHECK	
-	for ( volatile int i = 0; i < bbi2c_WAIT_VAL / 2; i++ )
+	for ( volatile int i = 0; i < wait_val / 2; i++ )
 		if ( 0x3 !=  (gpio_get_all() & 0x3) )
 			return BUS_BUSY;
 #endif
 	
 	set_sda( 0 );
-	short_wait( bbi2c_WAIT_VAL );
+	short_wait( wait_val );
 	set_scl( 0 );
 	
 	return NO_ERROR;
 }
 
-inline void stop_condition( void ) {
+inline void Bitbang_I2C_Controller::stop_condition( void ) {
 	set_scl( 0 );
 	set_sda( 0 );
-	short_wait( bbi2c_WAIT_VAL );
+	short_wait( wait_val );
 	set_scl( 1 );
-	short_wait( bbi2c_WAIT_VAL );
+	short_wait( wait_val );
 	set_sda( 1 );
 }
 
-inline void prepare_for_repeated_start_condition( void ) {
+inline void Bitbang_I2C_Controller::prepare_for_repeated_start_condition( void ) {
 	set_scl( 0 );
-	short_wait( bbi2c_WAIT_VAL );
+	short_wait( wait_val );
 	set_scl( 1 );
-	short_wait( bbi2c_WAIT_VAL );
+	short_wait( wait_val );
 }
 
-ctrl_status write_byte( uint8_t data ) {
+ctrl_status Bitbang_I2C_Controller::write_byte( uint8_t data ) {
 	for ( int i = 7; i >= 0; i-- ) {
 		int bit		= ( data >> i ) & 0x1;
 		int check	= bit_io( bit );
@@ -154,7 +149,7 @@ ctrl_status write_byte( uint8_t data ) {
 	return bit_io( 1 ) ? NACK_ON_ADDRESS : NO_ERROR;
 }
 
-uint8_t read_byte( bool last_byte ) {
+uint8_t Bitbang_I2C_Controller::read_byte( bool last_byte ) {
 	uint8_t data = 0x0;
 	for ( int i = 7; i >= 0; i-- ) {
 		data |= ( bit_io( 1 ) ? 0x1 : 0x0 ) << i;
@@ -165,7 +160,7 @@ uint8_t read_byte( bool last_byte ) {
 	return data;
 }
 
-ctrl_status write_transaction( uint8_t address, uint8_t *data, int length, bool repeated_start ) {
+ctrl_status Bitbang_I2C_Controller::write_transaction( uint8_t address, uint8_t *data, int length, bool repeated_start ) {
 	ctrl_status	err	= NO_ERROR;
 	
 	err	= start_condition();
@@ -201,7 +196,7 @@ ctrl_status write_transaction( uint8_t address, uint8_t *data, int length, bool 
 	return err;
 }
 
-ctrl_status read_transaction( uint8_t address, uint8_t *data, int length, bool repeated_start ) {
+ctrl_status Bitbang_I2C_Controller::read_transaction( uint8_t address, uint8_t *data, int length, bool repeated_start ) {
 	ctrl_status	err	= NO_ERROR;
 	
 	err	= start_condition();
